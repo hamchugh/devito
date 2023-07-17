@@ -52,6 +52,8 @@ def sniff_compiler_version(cc):
         compiler = "clang"
     elif ver.startswith("Homebrew clang"):
         compiler = "clang"
+    elif ver.startswith("AMD clang")
+        compiler = "aocc"
     elif ver.startswith("icc"):
         compiler = "icc"
     elif ver.startswith("pgcc"):
@@ -460,6 +462,18 @@ class ClangCompiler(Compiler):
             if llvmm1 and language == 'openmp':
                 self.ldflags += ['-mcpu=apple-m1', '-fopenmp', '-L%s' % llvmm1['libs']]
                 self.cflags += ['-Xclang', '-I%s' % llvmm1['include']]
+        elif platform is ZNVER4:
+            self.ldflags += ["-march=%s" % platform.march]
+            self.cflags += ["-march=%s" % platform.march]
+            if language == "openmp":
+                self.cflags += ["-fopenmp"]
+                self.ldflags += ["-fopenmp"]
+        elif platform is AMD:
+            self.ldflags += ["-march=native"]
+            self.cflags += ["-march=native"]
+            if language == "openmp":
+                self.cflags += ["-fopenmp"]
+                self.ldflags += ["-fopenmp"]
         else:
             if platform in [POWER8, POWER9]:
                 # -march isn't supported on power architectures
@@ -834,6 +848,7 @@ compiler_registry = {
     'cray': CrayCompiler,
     'aomp': AOMPCompiler,
     'amdclang': AOMPCompiler,
+    'aocc' : ClangCompiler,
     'hip': HipCompiler,
     'pgcc': PGICompiler,
     'pgi': PGICompiler,

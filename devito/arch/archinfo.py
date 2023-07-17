@@ -21,8 +21,10 @@ __all__ = ['platform_registry', 'get_cpu_info', 'get_gpu_info', 'get_nvidia_cc',
            # Intel
            'INTEL64', 'SNB', 'IVB', 'HSW', 'BDW', 'KNL', 'KNL7210',
            'SKX', 'KLX', 'CLX', 'CLK',
+           # AMD
+           'AMD', 'ZNVER4',
            # ARM
-           'AMD', 'ARM', 'M1', 'GRAVITON',
+           'ARM', 'M1', 'GRAVITON',
            # Other loosely supported CPU architectures
            'POWER8', 'POWER9',
            # GPUs
@@ -513,7 +515,14 @@ def get_platform():
         elif 'm1' in brand:
             return platform_registry['m1']
         elif 'amd' in brand:
-            return platform_registry['amd']
+            if "epyc" in brand:
+                generation = cpu_info["brand"].split(" ")[2]
+                if generation.startswith("9"):
+                    return platform_registry['znver4']
+            elif "amd eng sample" in brand:
+                return  platform_registry['znver4']
+            else:
+                return platform_registry['amd']
     except:
         pass
 
@@ -627,8 +636,7 @@ class Arm(Cpu64):
 
 class Amd(Cpu64):
 
-    known_isas = ('cpp', 'sse', 'avx', 'avx2')
-
+    known_isas = ('cpp', 'sse', 'avx', 'avx2', 'avx512')
 
 class Power(Cpu64):
 
@@ -750,6 +758,7 @@ GRAVITON = Arm('graviton')
 M1 = Arm('m1')
 
 AMD = Amd('amd')
+ZNVER4 = Amd('znver4',isa='avx512')
 
 POWER8 = Power('power8')
 POWER9 = Power('power9')
@@ -777,6 +786,7 @@ platform_registry = {
     'graviton': GRAVITON,  # AMS arm
     'm1': M1,
     'amd': AMD,  # Generic AMD CPU
+    'znver4' : ZNVER4, # AMD ZEN 4 CPU (e.g EPYC 4th Gen. Genoa)
     'power8': POWER8,
     'power9': POWER9,
     'nvidiaX': NVIDIAX,  # Generic NVidia GPU
